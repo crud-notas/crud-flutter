@@ -28,7 +28,6 @@ class Note {
 
 class NotesList extends StatelessWidget {
   
-  final _biggerFont = const TextStyle(fontSize: 18.0);
   final List<Note> notes;
 
   NotesList({Key key, this.notes}) : super(key: key);
@@ -39,7 +38,6 @@ class NotesList extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       itemCount: notes.length,
       itemBuilder: (context, i) {
-        // if (i.isOdd) return Divider(); 
         return _buildRow(notes[i]);
       },
       separatorBuilder: (BuildContext context, int index) => const Divider(),
@@ -50,7 +48,7 @@ class NotesList extends StatelessWidget {
     return ListTile(
       title: Text(
         note.name,
-        style: _biggerFont,
+        style: TextStyle(fontSize: 18.0),
       ),
     );
   }
@@ -62,7 +60,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appTitle = 'crudESIG';
-
     return MaterialApp(
       title: appTitle,
       home: MyHomePage(title: appTitle),
@@ -91,6 +88,81 @@ class MyHomePage extends StatelessWidget {
               : Center(child: CircularProgressIndicator());
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SaveNotePage()),
+            ).then((a) => print('Atualizar view'));
+        },
+        tooltip: 'Show me the value!',
+        child: Icon(Icons.text_fields),
+      ),
     );
+  }
+}
+
+class SaveNotePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Second Route"),
+      ),
+      body: MyCustomForm(),
+    );
+  }
+}
+
+class MyCustomForm extends StatefulWidget {
+  @override
+  _NoteFormState createState() => _NoteFormState();
+}
+
+class _NoteFormState extends State<MyCustomForm> {
+  final _formKey = GlobalKey<FormState>();
+  String _value = ''; 
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TextFormField(
+                    onSaved: (value) => _value = value,
+                    validator: (value) {
+                      if (value.isEmpty) {
+                        return 'Nova nota';
+                      }
+                      return null;
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: RaisedButton(
+                      onPressed: () {
+                        if (_formKey.currentState.validate()) {
+                          _formKey.currentState.save();
+                          saveNote();
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Text('Salvar'),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          );
+  }
+  
+  void saveNote() async {  
+    var note = json.encode({'id': null, 'name': _value, 'status': false});
+    await http.Client().post(
+      'https://pacific-sea-93717.herokuapp.com/note', headers: {"Content-Type": "application/json"}, body: note);
   }
 }
